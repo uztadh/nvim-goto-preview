@@ -64,6 +64,20 @@ M.lsp_request_definition = function(opts)
   end
 end
 
+--- Preview hover information.
+--- @param opts table: Custom config
+---        • focus_on_open boolean: Focus the floating window when opening it.
+---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
+--- @see require("goto-preview").setup()
+M.lsp_request_hover = function(opts)
+  local params = vim.lsp.util.make_position_params()
+  local lsp_call = "textDocument/hover"
+  local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
+  if not success then
+    print_lsp_error(lsp_call)
+  end
+end
+
 --- Preview type definition.
 --- @param opts table: Custom config
 ---        • focus_on_open boolean: Focus the floating window when opening it.
@@ -123,6 +137,7 @@ M.remove_win = lib.remove_win
 M.buffer_entered = lib.buffer_entered
 M.dismiss_preview = lib.dismiss_preview
 M.goto_preview_definition = M.lsp_request_definition
+M.goto_preview_hover = M.lsp_request_hover
 M.goto_preview_type_definition = M.lsp_request_type_definition
 M.goto_preview_implementation = M.lsp_request_implementation
 M.goto_preview_references = M.lsp_request_references
@@ -131,7 +146,12 @@ M.goto_preview_references = M.lsp_request_references
 M.apply_default_mappings = function()
   if M.conf.default_mappings then
     vim.keymap.set("n", "gpd", require("goto-preview").goto_preview_definition, { desc = "Preview definition" })
-    vim.keymap.set("n", "gpt", require("goto-preview").goto_preview_type_definition, { desc = "Preview type definition" })
+    vim.keymap.set(
+      "n",
+      "gpt",
+      require("goto-preview").goto_preview_type_definition,
+      { desc = "Preview type definition" }
+    )
     vim.keymap.set("n", "gpi", require("goto-preview").goto_preview_implementation, { desc = "Preview implementation" })
     vim.keymap.set("n", "gpr", require("goto-preview").goto_preview_references, { desc = "Preview references" })
     vim.keymap.set("n", "gP", require("goto-preview").close_all_win, { desc = "Close preview windows" })

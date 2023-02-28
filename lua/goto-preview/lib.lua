@@ -234,7 +234,6 @@ local handle = function(result, opts)
   end
 
   local data = result[1] or result
-
   local target = nil
   local cursor_position = {}
 
@@ -243,7 +242,25 @@ local handle = function(result, opts)
     return
   end
 
-  target, cursor_position = M.conf.lsp_configs.get_config(data)
+  if data.contents ~= nil then
+    -- if content already present
+    local contents = vim.lsp.util.convert_input_to_markdown_lines(data.contents)
+    contents = vim.lsp.util.trim_empty_lines(contents)
+    if vim.tbl_isempty(contents) then
+      vim.notify "No information available"
+      return
+    end
+
+    local bufnr = vim.api.nvim_create_buf(nil, nil)
+    vim.lsp.util.stylize_markdown(bufnr, contents, {})
+    -- mark as modified otherwise you'll get an error when attempting to exit
+    vim.api.nvim_buf_set_option(bufnr, "modified", false)
+    target = bufnr
+    cursor_position = { 1, 0 }
+  else
+    -- load from uri
+    target, cursor_position = M.conf.lsp_configs.get_config(data)
+  end
 
   -- opts: focus_on_open, dismiss_on_move, etc.
   M.open_floating_win(target, cursor_position, opts)
